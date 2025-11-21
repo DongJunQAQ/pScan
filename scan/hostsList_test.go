@@ -23,7 +23,7 @@ func TestAdd(t *testing.T) {
 	testCases := []struct {
 		name      string //子测试的名称/标题
 		host      string //主机
-		expectLen int    //预期长度
+		expectLen int    //预期列表长度
 		expectErr error  //预期错误类型
 	}{ //定义匿名结构体的切片，里面包含了每条子测试的名称、所需数据、预期结果
 		{"AddNew", "host2", 2, nil},
