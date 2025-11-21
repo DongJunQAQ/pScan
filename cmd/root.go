@@ -13,7 +13,7 @@ var rootCmd = &cobra.Command{ //定义根命令（应用），默认情况下根
 pScan allows you to add, list, and delete hosts from the list.
 
 pScan executes a port scan on specified TCP ports. You can customize the target ports using a command line flag.`,
-	Version: "0.1.0",
+	Version: "v0.1.0", //定义应用程序版本，可使用命令行标志-v、--version查看
 }
 
 func Execute() {
@@ -23,6 +23,8 @@ func Execute() {
 	}
 }
 
-func init() {
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+func init() { //在main()函数之前运行，通常用来添加命令行标志
+	//设置打印版本信息时的模板
+	versionTemplate := `{{printf "%s: %s - version %s\n" .Name .Short .Version}}` //Go模板字符串，用反引号`包裹，支持多行，且模板语法{{ }}会被cobra解析，然后使用printf格式化输出
+	rootCmd.SetVersionTemplate(versionTemplate)                                   //将自定义的版本模板绑定到根命令
 }
