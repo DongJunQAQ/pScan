@@ -48,7 +48,7 @@ func (h1 *HostsList) Load(hostFile string) error { //导入文件中的主机列
 		if errors.Is(err, os.ErrNotExist) { //如果错误是文件不存在则不执行任何操作
 			return nil
 		}
-		return err //如果无法打开文件则返回错误
+		return err //如果是其他原因导致无法打开文件则返回错误
 	}
 	defer f.Close()                //关闭文件
 	scanner := bufio.NewScanner(f) //创建扫描器，扫描器会自动读取f中的数据，其默认以行为单位
