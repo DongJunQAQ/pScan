@@ -63,3 +63,50 @@ func TestAdd(t *testing.T) {
 		})
 	}
 }
+
+func TestRemove(t *testing.T) {
+	testCases := []struct {
+		name      string
+		host      string
+		expectLen int
+		expectErr error
+	}{
+		{"RemoveExisting", "host1", 1, nil},          //删除存在元素的子测试
+		{"RemoveNotFound", "host3", 1, ErrNotExists}, //删除不存在元素的子测试
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			h1 := &HostsList{}
+			//初始化主机列表
+			for _, h := range []string{"host1", "host2"} { //每次循环前先添加两个主机
+				if err := h1.Add(h); err != nil {
+					t.Fatal(err) //如果初始化失败则直接终止当前子测试
+				}
+			}
+
+			err := h1.Remove(tc.host) //之后再删除子测试中的主机
+
+			//处理“预期有错误”的子测试（仅适用子测试二）
+			if tc.expectErr != nil {
+				if err == nil {
+					t.Fatalf("预期失败但实际成功\n") //因为到第二条子测试时会删除失败，此时err变量中必有错误，如果没有则立即终止子测试返回致命错误
+				}
+				if !errors.Is(err, tc.expectErr) { //如果实际错误与预期错误不符
+					t.Errorf("预期错误 %q，实际结果 %q\n", tc.expectErr, err) //则记录测试失败
+				}
+				return //提前返回结束此函数，当前用例的“删除失败场景”校验已完成，无需执行后续“删除成功场景”的校验
+			}
+
+			//处理“预期无错误”的子测试（仅适用子测试一）
+			if err != nil { //如果实际有错误
+				t.Fatalf("预期成功但实际失败 %q\n", err) //则致命错误立即终止子测试
+			}
+			if len(h1.Hosts) != tc.expectLen { //删除成功后，判断主机列表长度是否符合预期
+				t.Errorf("预期列表长度 %d，实际长度 %d\n", tc.expectLen, len(h1.Hosts))
+			}
+			if h1.Hosts[0] == tc.host { //判断列表的元素是否删除成功，拿删除后索引为0的元素host2与要删除的元素host1对比
+				t.Errorf("删除失败，主机 %q 依旧出现在列表中\n", tc.host) //如果一致则说明删除失败，本次子测试也被标记为失败
+			}
+		})
+	}
+}

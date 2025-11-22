@@ -24,10 +24,18 @@ func (h1 *HostsList) search(host string) (bool, int) { //在主机列表中搜�
 	return false, -1
 }
 
-func (h1 *HostsList) Add(host string) error {
+func (h1 *HostsList) Add(host string) error { //为主机列表添加主机
 	if found, _ := h1.search(host); found { //添加主机前先搜索一下主机是否已存在，存在返回true，不存在返回false
 		return fmt.Errorf("%w: %s", ErrExists, host) //返回主机已存在的错误
 	}
 	h1.Hosts = append(h1.Hosts, host)
 	return nil
+}
+
+func (h1 *HostsList) Remove(host string) error { //从主机列表中删除主机
+	if found, i := h1.search(host); found { //添加主机前先搜索一下主机是否已存在，存在返回true，不存在返回false
+		h1.Hosts = append(h1.Hosts[:i], h1.Hosts[i+1:]...)
+		return nil
+	}
+	return fmt.Errorf("%w: %s", ErrNotExists, host) //返回主机不存在的错误
 }
