@@ -2,6 +2,7 @@ package scan
 
 import (
 	"errors"
+	"os"
 	"testing"
 )
 
@@ -31,7 +32,7 @@ func TestAdd(t *testing.T) {
 	}
 	for _, tc := range testCases { //遍历每条子测试，逐个执行子测试
 		t.Run(tc.name, func(t *testing.T) { //执行子测试，它会在一个独立的goroutine（协程）中执行，一个子测试失败不会影响其他子测试的执行
-			hl := &HostsList{} //创建被测试的对象：HostsList结构体实例（每次子测试都新建，避免用例间污染）
+			hl := &HostsList{} //创建被测试的对象：HostsList结构体实例（每次子测试都新建，避免用例间污染），最终hl存储的是一个内存地址
 			//初始化主机列表
 			if err := hl.Add("host1"); err != nil { //每次循环前先添加host1主机
 				t.Fatal(err) //如果初始化失败则直接终止当前子测试
@@ -108,5 +109,55 @@ func TestRemove(t *testing.T) {
 				t.Errorf("删除失败，主机 %q 依旧出现在列表中\n", tc.host) //如果一致则说明删除失败，本次子测试也被标记为失败
 			}
 		})
+	}
+}
+
+func TestSaveLoad(t *testing.T) { //测试保存/导入的功能，先初始化hl1列表并使用Save()方法将其保存到临时文件中，然后使用Load()方法将临时文件中的内容加载到hl2列表中，最后比较二者，如不一致则测试失败
+	//创建两个HostsList结构体类型的零值实例
+	hl1 := HostsList{} //Save方法所使用的实例
+	hl2 := HostsList{} //Load方法所使用的实例
+	//添加一个主机至主机列表hl1
+	hostName := "host1"
+	err := hl1.Add(hostName)
+	if err != nil {
+		t.Fatalf("添加主机至主机列表时失败: %s\n", err)
+	}
+	//在磁盘中创建临时文件
+	tf, err := os.CreateTemp("", "") //dir参数:临时文件的存放目录，为空表示使用系统默认临时目录，prefix参数:临时文件名的前缀，为空表示无前缀
+	if err != nil {
+		t.Fatalf("创建临时文件失败: %s\n", err)
+	}
+	defer os.Remove(tf.Name()) //删除临时文件
+	//保存
+	if err := hl1.Save(tf.Name()); err != nil { //将主机列表保存至文件
+		t.Fatalf("保存主机列表至文件时错误: %s\n", err)
+	}
+	//加载
+	if err := hl2.Load(tf.Name()); err != nil { //加载文件中的主机列表至hl2
+		t.Fatalf("从文件中获取主机列表时错误: %s\n", err)
+	}
+	//对比二者的结果
+	if hl1.Hosts[0] != hl2.Hosts[0] {
+		t.Errorf("hl1中的主机%q应该于hl2中的主机%q一致\n", hl1.Hosts[0], hl2.Hosts[0])
+	}
+}
+
+func TestLoadNoFile(t *testing.T) { //测试加载一个不存在的文件
+	tf, err := os.CreateTemp("", "") //创建临时文件
+	if err != nil {
+		t.Fatalf("创建临时文件失败: %s\n", err)
+	}
+
+	if err := tf.Close(); err != nil { //需要在删除文件前关闭文件句柄，否则会导致删除失败
+		t.Fatalf("关闭临时文件句柄失败: %s\n", err)
+	}
+
+	if err := os.Remove(tf.Name()); err != nil { //删除临时文件
+		t.Fatalf("删除临时文件失败: %s\n", err)
+	}
+
+	hl := &HostsList{}
+	if err := hl.Load(tf.Name()); err != nil { //因为在上一步已经删除掉临时文件了，根据Load()函数的定义如果文件不存在时err返回空，如果不为空则测试失败
+		t.Errorf("预期无返回错误，但实际返回了错误: %q\n", err)
 	}
 }
