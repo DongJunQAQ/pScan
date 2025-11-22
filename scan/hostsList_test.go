@@ -31,13 +31,13 @@ func TestAdd(t *testing.T) {
 	}
 	for _, tc := range testCases { //遍历每条子测试，逐个执行子测试
 		t.Run(tc.name, func(t *testing.T) { //执行子测试，它会在一个独立的goroutine（协程）中执行，一个子测试失败不会影响其他子测试的执行
-			h1 := &HostsList{} //创建被测试的对象：HostsList结构体实例（每次子测试都新建，避免用例间污染）
+			hl := &HostsList{} //创建被测试的对象：HostsList结构体实例（每次子测试都新建，避免用例间污染）
 			//初始化主机列表
-			if err := h1.Add("host1"); err != nil { //每次循环前先添加host1主机
+			if err := hl.Add("host1"); err != nil { //每次循环前先添加host1主机
 				t.Fatal(err) //如果初始化失败则直接终止当前子测试
 			}
 
-			err := h1.Add(tc.host) //之后再添加子测试中的主机
+			err := hl.Add(tc.host) //之后再添加子测试中的主机
 
 			//处理“预期有错误”的子测试（仅适用子测试二）
 			if tc.expectErr != nil {
@@ -54,11 +54,11 @@ func TestAdd(t *testing.T) {
 			if err != nil { //如果实际有错误
 				t.Fatalf("预期成功但实际失败 %q\n", err) //则致命错误立即终止子测试
 			}
-			if len(h1.Hosts) != tc.expectLen { //添加成功后，判断主机列表长度是否符合预期
-				t.Errorf("预期列表长度 %d，实际长度 %d\n", tc.expectLen, len(h1.Hosts))
+			if len(hl.Hosts) != tc.expectLen { //添加成功后，判断主机列表长度是否符合预期
+				t.Errorf("预期列表长度 %d，实际长度 %d\n", tc.expectLen, len(hl.Hosts))
 			}
-			if h1.Hosts[1] != tc.host { //判断列表中索引为1的元素是否是刚添加的主机
-				t.Errorf("预期索引1的主机名为 %q ，实际结果 %q\n", tc.host, h1.Hosts[1])
+			if hl.Hosts[1] != tc.host { //判断列表中索引为1的元素是否是刚添加的主机
+				t.Errorf("预期索引1的主机名为 %q ，实际结果 %q\n", tc.host, hl.Hosts[1])
 			}
 		})
 	}
@@ -76,15 +76,15 @@ func TestRemove(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			h1 := &HostsList{}
+			hl := &HostsList{}
 			//初始化主机列表
 			for _, h := range []string{"host1", "host2"} { //每次循环前先添加两个主机
-				if err := h1.Add(h); err != nil {
+				if err := hl.Add(h); err != nil {
 					t.Fatal(err) //如果初始化失败则直接终止当前子测试
 				}
 			}
 
-			err := h1.Remove(tc.host) //之后再删除子测试中的主机
+			err := hl.Remove(tc.host) //之后再删除子测试中的主机
 
 			//处理“预期有错误”的子测试（仅适用子测试二）
 			if tc.expectErr != nil {
@@ -101,10 +101,10 @@ func TestRemove(t *testing.T) {
 			if err != nil { //如果实际有错误
 				t.Fatalf("预期成功但实际失败 %q\n", err) //则致命错误立即终止子测试
 			}
-			if len(h1.Hosts) != tc.expectLen { //删除成功后，判断主机列表长度是否符合预期
-				t.Errorf("预期列表长度 %d，实际长度 %d\n", tc.expectLen, len(h1.Hosts))
+			if len(hl.Hosts) != tc.expectLen { //删除成功后，判断主机列表长度是否符合预期
+				t.Errorf("预期列表长度 %d，实际长度 %d\n", tc.expectLen, len(hl.Hosts))
 			}
-			if h1.Hosts[0] == tc.host { //判断列表的元素是否删除成功，拿删除后索引为0的元素host2与要删除的元素host1对比
+			if hl.Hosts[0] == tc.host { //判断列表的元素是否删除成功，拿删除后索引为0的元素host2与要删除的元素host1对比
 				t.Errorf("删除失败，主机 %q 依旧出现在列表中\n", tc.host) //如果一致则说明删除失败，本次子测试也被标记为失败
 			}
 		})
