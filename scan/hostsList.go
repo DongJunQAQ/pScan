@@ -1,8 +1,10 @@
 package scan
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
+	"os"
 	"sort"
 )
 
@@ -38,4 +40,28 @@ func (h1 *HostsList) Remove(host string) error { //从主机列表中删除主�
 		return nil
 	}
 	return fmt.Errorf("%w: %s", ErrNotExists, host) //返回主机不存在的错误
+}
+
+func (h1 *HostsList) Load(hostFile string) error { //导入文件中的主机列表
+	f, err := os.Open(hostFile) //以只读模式打开指定路径的文件
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) { //如果错误是文件不存在则不执行任何操作
+			return nil
+		}
+		return err //如果无法打开文件则返回错误
+	}
+	defer f.Close()                //关闭文件
+	scanner := bufio.NewScanner(f) //创建扫描器，扫描器会自动读取f中的数据，其默认以行为单位
+	for scanner.Scan() {           //循环读取每行数据，每次调用会读取一行数据
+		h1.Hosts = append(h1.Hosts, scanner.Text()) //把当前行的主机名追加到h1.Hosts切片中，scanner.Text(): 获取当前扫描到的行内容（字符串类型，已自动去除末尾的换行符）
+	}
+	return nil
+}
+
+func (h1 *HostsList) Save(hostFile string) error { //将主机列表保存至文件中
+	output := ""
+	for _, h := range h1.Hosts { //遍历主机列表，将主机列表中的数据变成一行一行字符串的格式
+		output += fmt.Sprintln(h) //fmt.Sprintln():将h转为字符串并在末尾添加换行符\n
+	}
+	return os.WriteFile(hostFile, []byte(output), 0644) //将数据写入文件，[]byte(output)：由于文件存储的本质是字节，因为output是字符串，所以需要通过[]byte()将字符串转为字节切片后存入文件
 }
